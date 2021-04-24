@@ -1,0 +1,201 @@
+{
+  "$schema-template": "2.0.0",
+  "modulesContent": {
+    "$edgeAgent": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "runtime": {
+          "type": "docker",
+          "settings": {
+            "minDockerVersion": "v1.25",
+            "loggingOptions": "",
+            "registryCredentials": {
+              "paddycontainers": {
+                "username": "$CONTAINER_REGISTRY_USERNAME_paddycontainers",
+                "password": "$CONTAINER_REGISTRY_PASSWORD_paddycontainers",
+                "address": "paddycontainers.azurecr.io"
+              }
+            }
+          }
+        },
+        "systemModules": {
+          "edgeAgent": {
+            "type": "docker",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-agent:1.2.0",
+              "createOptions": {}
+            }
+          },
+          "edgeHub": {
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-hub:1.2.0-rc4",
+              "createOptions": {
+                "HostConfig": {
+                  "PortBindings": {
+                    "5671/tcp": [
+                      {
+                        "HostPort": "5671"
+                      }
+                    ],
+                    "8883/tcp": [
+                      {
+                        "HostPort": "8883"
+                      }
+                    ],
+                    "443/tcp": [
+                      {
+                        "HostPort": "443"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "modules": {
+          "pyFileManagerModule": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.pyFileManagerModule}",
+              "createOptions": {
+                "User": "${FILEMANAGER_USERID_GROUPID}",
+                "HostConfig": {
+                  "Binds": [
+                    "${FILEMANAGER_BIND_MOUNT}"
+                  ]
+                }
+              }
+            },
+            "env": {
+              "EDGE_BLOB_CONNSTRING": {
+                "value": "${EDGE_CONN_STRING}"
+              },
+              "FILEMANAGER_EDGE_ROOT": {
+                "value": "${FILEMANAGER_EDGE_ROOT}"
+              },
+              "EDGE_BLOB_CONTAINER_NAME": {
+                "value": "${EDGE_BLOB_CONTAINER_NAME}"
+              }
+            }
+          },
+          "containerinsights": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azuremonitor/containerinsights/ciprod:iot-0.1.3.3"
+            },
+            "env": {
+              "UploadTarget": {
+                "value": "AzureMonitor"
+              },
+              "LogAnalyticsWorkspaceId": {
+                "value": "${LOGANALYTICS_WorkspaceId}"
+              },
+              "LogAnalyticsSharedKey": {
+                "value": "${LOGANALYTICS_SharedKey}"
+              },
+              "HubResourceID": {
+                "value": "${LOGANALYTICS_HubResourceId}"
+              },
+              "MetricsEndpointsCSV": {
+                "value": "http://edgeHub:9600/metrics,http://edgeAgent:9600/metrics"
+              },
+              "ScrapeFrequencyInSecs": {
+                "value": "30"
+              }
+            }
+          },
+          "blobonedge": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azure-blob-storage:1.4",
+              "createOptions": {
+                "HostConfig": {
+                  "Binds": [
+                    "${BLOB_BIND_MOUNT}"
+                  ],
+                  "PortBindings": {
+                    "11002/tcp": [
+                      {
+                        "HostPort": "11002"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "env": {
+              "LOCAL_STORAGE_ACCOUNT_NAME": {
+                "value": "${EDGE_STORAGEACCT_NAME}"
+              },
+              "LOCAL_STORAGE_ACCOUNT_KEY": {
+                "value": "${EDGE_STORAGEACCT_KEY}"
+              }
+            }
+          },
+          "SimulatedTemperatureSensor": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-simulated-temperature-sensor:1.0",
+              "createOptions": {}
+            }
+          }
+        }
+      }
+    },
+    "$edgeHub": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "routes": {
+          "pyFileManagerModuleToIoTHub": "FROM /messages/modules/pyFileManagerModule/outputs/* INTO $upstream",
+          "AzureBlobStorageonIoTEdgeToIoTHub": "FROM /messages/modules/AzureBlobStorageonIoTEdge/outputs/* INTO $upstream",
+          "SimulatedTemperatureSensorToIoTHub": "FROM /messages/modules/SimulatedTemperatureSensor/* INTO $upstream"
+        },
+        "storeAndForwardConfiguration": {
+          "timeToLiveSecs": 7200
+        }
+      }
+    },
+    "blobonedge": {
+      "properties.desired": {
+        "deviceAutoDeleteProperties": {
+          "deleteOn": true,
+          "deleteAfterMinutes": 60,
+          "retainWhileUploading": true
+        },
+        "deviceToCloudUploadProperties": {
+          "uploadOn": true,
+          "uploadOrder": "OldestFirst",
+          "cloudStorageConnectionString": "${CLOUD_STORAGE_ACCT_CONNSTRING}",
+          "storageContainersForUpload": {
+            "${EDGE_BLOB_CONTAINER_NAME}": {
+              "target": "${CLOUD_CONTAINER_NAME}"
+            }
+          },
+          "deleteAfterUpload": false
+        }
+      }
+    },
+    "SimulatedTemperatureSensor": {
+      "properties.desired": {
+        "SendData": true,
+        "SendInterval": 5
+      }
+    }
+  }
+}
