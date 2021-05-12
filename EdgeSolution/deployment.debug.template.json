@@ -144,16 +144,6 @@
                 "value": "${EDGE_STORAGEACCT_KEY}"
               }
             }
-          },
-          "SimulatedTemperatureSensor": {
-            "version": "1.0",
-            "type": "docker",
-            "status": "running",
-            "restartPolicy": "always",
-            "settings": {
-              "image": "mcr.microsoft.com/azureiotedge-simulated-temperature-sensor:1.0",
-              "createOptions": {}
-            }
           }
         }
       }
@@ -162,9 +152,7 @@
       "properties.desired": {
         "schemaVersion": "1.0",
         "routes": {
-          "pyFileManagerModuleToIoTHub": "FROM /messages/modules/pyFileManagerModule/outputs/* INTO $upstream",
-          "AzureBlobStorageonIoTEdgeToIoTHub": "FROM /messages/modules/AzureBlobStorageonIoTEdge/outputs/* INTO $upstream",
-          "SimulatedTemperatureSensorToIoTHub": "FROM /messages/modules/SimulatedTemperatureSensor/* INTO $upstream"
+          "pyFileManagerModuleToIoTHub": "FROM /messages/modules/pyFileManagerModule/outputs/* INTO $upstream"
         },
         "storeAndForwardConfiguration": {
           "timeToLiveSecs": 7200
@@ -189,12 +177,6 @@
           },
           "deleteAfterUpload": false
         }
-      }
-    },
-    "SimulatedTemperatureSensor": {
-      "properties.desired": {
-        "SendData": true,
-        "SendInterval": 5
       }
     }
   }

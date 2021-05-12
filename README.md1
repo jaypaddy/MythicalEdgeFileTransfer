@@ -1,0 +1,16 @@
+SPN for AML - To be replaced with Managed Identity
+
+az ad sp create-for-rbac --name EdgeMLCommunicator
+{
+  "appId": "9938aa20-e855-4fff-b295-6aa0ca13f0ae",
+  "displayName": "EdgeMLCommunicator",
+  "name": "http://EdgeMLCommunicator",
+  "password": "5Dvw7273h0yH01M1uX-vs76b7Xjjpn-seQ",
+  "tenant": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+}
+
+az iot hub generate-sas-token -n mythicaledge1 --du 3600000
+Tue May 11 18:27:36 CDT 2021
+{
+  "sas": "SharedAccessSignature sr=mythicaledge1.azure-devices.net&sig=Z%2BtIyIwif4lURxAX1ffyuNJ0jGvV0WePzIQQv7zwlRc%3D&se=1624375645&skn=iothubowner"
+}

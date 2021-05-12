@@ -17,7 +17,7 @@
 ### Send File from Edge to Cloud
 This is implemented as a Direct Method
 1.  Initiate a Direct Method call to pyFileManagerModule
-    *   Method: AddFile
+    *   Method: Add
     *   Payload: {"name":"<FILENAME>", "size":<SIZE IN MiB>}
         *   examples
             *   100MiB {"name":"100MiB.txt", "size":100}
@@ -27,7 +27,10 @@ This is implemented as a Direct Method
 4.  Establishes a connection to Azure Blob Storage on Edge. Connection String to Blob on Edge is injected via ENV
 5.  Writes Blob to Azure Blob Storage Container on Edge : EDGE_BLOB_CONTAINER_NAME
 
-
+### Send File from Cloud to Edge
+1. An Azure Blob Trigger Function subscribing to Blob triggers
+2. Azure function creates a SAS for the blob and sends to Edge the SAS_URL
+3. Edge Module receives the SAS_URL and downloads the blob to local machine
 
 ### Create a AzureVM with IoTEdgee 1.2.0
 `az deployment group create \

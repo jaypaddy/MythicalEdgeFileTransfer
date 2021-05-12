@@ -13,7 +13,7 @@ class BlobOperator:
     """Class for Blob operations
     """
 
-    def __init__(self, connstring):
+    def __init__(self, connstring=None):
         """Initialize the class
 
         Args:
@@ -64,3 +64,18 @@ class BlobOperator:
         else:
             return False
 
+    def download_blob(self, blobname, blobsas_url ):
+        """Download  Blob 
+
+        Args:
+            blobname (str): blob name.
+            blobsas_url (str): SAS URL for Blob.
+        """
+        blob_client = BlobClient.from_blob_url(blobsas_url)
+        edgeblobname = os.path.join(os.environ.get("FILEMANAGER_EDGE_ROOT"), blobname)
+        print("Downloading Blob...{} to {}".format(blobname,edgeblobname))
+        with open(edgeblobname, "wb") as my_blob:
+            download_stream = blob_client.download_blob()
+            my_blob.write(download_stream.readall())
+        print("Blob {} written to edge storage...".format(edgeblobname))
+        return True

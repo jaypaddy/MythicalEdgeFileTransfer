@@ -32,11 +32,33 @@ async def main():
         await module_client.connect()
 
         async def addfile(fileinfo):
+            print(fileinfo)
+            print("type of fileinfo:", type(fileinfo))
+            if type(fileinfo) is str:
+                #convert to dict
+                fileinfo = json.loads(fileinfo)
+
             filename = fileinfo["name"]
             filesize = fileinfo["size"]
             edgeblobconnstring = os.environ.get("EDGE_BLOB_CONNSTRING")
             bloboperator = BlobOperator(edgeblobconnstring)
             bloboperator.addfile(filename, filesize)
+            return
+
+
+        async def downloadfile(blobinfo):
+            print(blobinfo)
+            print("type of blobinfo:", type(blobinfo))
+            if type(blobinfo) is str:
+                #convert to dict
+                blobinfo = json.loads(blobinfo)
+            blobname = blobinfo["blobname"]
+            blobsize = blobinfo["size"]
+            blobsasurl = blobinfo["blobsas_url"]    
+            bloboperator = BlobOperator()
+            print("Executing")
+            bloboperator.download_blob(blobname, blobsasurl)
+            #await module_client.send_message_to_output("","output1")
             return
 
         # define behavior for receiving an input message on input1
@@ -47,10 +69,12 @@ async def main():
         async def method_request_handler(method_request):
             print("Direct Method Call Received...")
             # Determine how to respond to the method request based on the method name
-            if method_request.name == "AddFile":
+            if method_request.name == "Add":
                 payload = {"result": True, "data": "some data"}  # set response payload
                 status = 200  # set return status code
-                print("executed AddFile")
+            elif method_request.name == "Download":
+                payload = {"result": True, "data": "some data"}  # set response payload
+                status = 200  # set return status code
             else:
                 payload = {"result": False, "data": "unknown method"}  # set response payload
                 status = 400  # set return status code
@@ -60,9 +84,13 @@ async def main():
             method_response = MethodResponse.create_from_method_request(method_request, status, payload)
             await module_client.send_method_response(method_response)
 
-            if method_request.name == "AddFile":
+            if method_request.name == "Add":
                 #method_request.payload is dict that contains the JSON payload being sent with the request.
                 await addfile(method_request.payload)
+            elif method_request.name == "Download":
+                #method_request.payload is dict that contains the JSON payload being sent with the request.
+                await downloadfile(method_request.payload)
+                
 
         # set the message handler on the client
         module_client.on_message_received = input1_message_handler
